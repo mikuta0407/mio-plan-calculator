@@ -102,6 +102,24 @@
             .range-table td.combos { text-align: left; font-size: 0.8rem; color: #4a5568; }
             .range-table tr.no-result td { color: #a0aec0; font-style: italic; }
             .range-scroll { max-height: 420px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; }
+
+            /* Mode tabs */
+            .tabs { display: flex; gap: 0; margin-bottom: 1.25rem; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; }
+            .tab-btn {
+              flex: 1; padding: 0.6rem 1rem; font-size: 0.9rem; font-weight: 600;
+              border: none; cursor: pointer; background: #edf2f7; color: #4a5568;
+              transition: background 0.15s, color 0.15s; margin-top: 0;
+            }
+            .tab-btn.active { background: #4299e1; color: #fff; }
+            .tab-btn:hover:not(.active) { background: #e2e8f0; }
+            .tab-panel { display: none; }
+            .tab-panel.active { display: block; }
+
+            /* Free mode results */
+            #free-result { display: none; }
+            #free-range-result { display: none; }
+
+            .error {
               background: #fff5f5;
               border: 1px solid #fc8181;
               color: #c53030;
@@ -113,9 +131,9 @@
             #loading { color: #718096; font-size: 0.85rem; margin-top: 0.5rem; }
         </style>
     </head>
-    <body>
+        <body>
         <div class="container">
-            <h1>IIJmio プラン組み合わせ計算機</h1>
+            <h1>📱 携帯プラン最適化</h1>
 
             <div class="card">
                 <h2>料金プラン一覧</h2>
@@ -127,231 +145,208 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>2GB</td>
-                            <td>¥850</td>
-                        </tr>
-                        <tr>
-                            <td>5GB</td>
-                            <td>¥950</td>
-                        </tr>
-                        <tr>
-                            <td>10GB</td>
-                            <td>¥1,400</td>
-                        </tr>
-                        <tr>
-                            <td>15GB</td>
-                            <td>¥1,600</td>
-                        </tr>
-                        <tr>
-                            <td>25GB</td>
-                            <td>¥2,000</td>
-                        </tr>
-                        <tr>
-                            <td>35GB</td>
-                            <td>¥2,400</td>
-                        </tr>
-                        <tr>
-                            <td>45GB</td>
-                            <td>¥3,300</td>
-                        </tr>
-                        <tr>
-                            <td>55GB</td>
-                            <td>¥3,900</td>
-                        </tr>
+                        <tr><td>2GB</td><td>¥850</td></tr>
+                        <tr><td>5GB</td><td>¥950</td></tr>
+                        <tr><td>10GB</td><td>¥1,400</td></tr>
+                        <tr><td>15GB</td><td>¥1,600</td></tr>
+                        <tr><td>25GB</td><td>¥2,000</td></tr>
+                        <tr><td>35GB</td><td>¥2,400</td></tr>
+                        <tr><td>45GB</td><td>¥3,300</td></tr>
+                        <tr><td>55GB</td><td>¥3,900</td></tr>
                     </tbody>
                 </table>
             </div>
 
-            <div class="card">
-                <h2>条件を指定</h2>
-                <div class="form-grid">
-                    <label>
-                        回線数
-                        <input
-                            type="number"
-                            id="lines"
-                            value="4"
-                            min="1"
-                            max="20"
-                        />
-                    </label>
-                    <label>
-                        最低容量 (GB)
-                        <input type="number" id="minGB" value="25" min="1" />
-                    </label>
-                    <label>
-                        最高容量 (GB)
-                        <input type="number" id="maxGB" value="45" min="1" />
-                    </label>
-                </div>
-                <div class="btn-group">
-                    <button id="calcBtn" onclick="calculate()" disabled>
-                        計算中…
-                    </button>
-                    <button
-                        id="rangeBtn"
-                        onclick="calculateRange()"
-                        disabled
-                        style="background: #667eea"
-                    >
-                        計算中…
-                    </button>
-                </div>
-                <div id="loading">WASMを読み込んでいます...</div>
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab(this, 'fixed')">回線数指定</button>
+                <button class="tab-btn" onclick="switchTab(this, 'free')">容量指定（回線数自動）</button>
             </div>
 
-            <div class="card" id="result"></div>
-            <div class="card" id="range-result"></div>
+            <div id="tab-fixed" class="tab-panel active">
+                <div class="card">
+                    <h2>条件を指定</h2>
+                    <div class="form-grid">
+                        <label>
+                            回線数
+                            <input type="number" id="lines" value="4" min="1" max="20" />
+                        </label>
+                        <label>
+                            最低容量 (GB)
+                            <input type="number" id="minGB" value="25" min="1" />
+                        </label>
+                        <label>
+                            最高容量 (GB)
+                            <input type="number" id="maxGB" value="45" min="1" />
+                        </label>
+                    </div>
+                    <div class="btn-group">
+                        <button id="calcBtn" onclick="calculate()" disabled>計算中…</button>
+                        <button id="rangeBtn" onclick="calculateRange()" disabled style="background:#667eea">計算中…</button>
+                    </div>
+                    <div id="loading">WASMを読み込んでいます...</div>
+                </div>
+                <div class="card" id="result" style="display:none"></div>
+                <div class="card" id="range-result" style="display:none"></div>
+            </div>
+
+            <div id="tab-free" class="tab-panel">
+                <div class="card">
+                    <h2>容量を指定（最安の回線数を自動選択）</h2>
+                    <div class="form-grid">
+                        <label>
+                            最低容量 (GB)
+                            <input type="number" id="freeMinGB" value="25" min="1" />
+                        </label>
+                        <label>
+                            最高容量 (GB)
+                            <input type="number" id="freeMaxGB" value="45" min="1" />
+                        </label>
+                        <label>
+                            最大回線数
+                            <input type="number" id="freeMaxLines" value="10" min="1" max="20" />
+                        </label>
+                    </div>
+                    <div class="btn-group">
+                        <button id="freeCalcBtn" onclick="calculateFree()" disabled>計算中…</button>
+                        <button id="freeRangeBtn" onclick="calculateFreeRange()" disabled style="background:#667eea">計算中…</button>
+                    </div>
+                </div>
+                <div class="card" id="free-result" style="display:none"></div>
+                <div class="card" id="free-range-result" style="display:none"></div>
+            </div>
         </div>
 
         <script>
             let wasmReady = false;
 
             const go = new Go();
-            WebAssembly.instantiateStreaming(
-                fetch("main.wasm"),
-                go.importObject,
-            )
+            WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject)
                 .then((res) => {
                     go.run(res.instance);
                     wasmReady = true;
-                    const btn = document.getElementById("calcBtn");
-                    btn.disabled = false;
-                    btn.textContent = "最安値を計算";
-                    const rangeBtn = document.getElementById("rangeBtn");
-                    rangeBtn.disabled = false;
-                    rangeBtn.textContent = "1GB単位で一覧表示";
+                    document.getElementById("calcBtn").disabled = false;
+                    document.getElementById("calcBtn").textContent = "最安値を計算";
+                    document.getElementById("rangeBtn").disabled = false;
+                    document.getElementById("rangeBtn").textContent = "1GB単位で一覧表示";
+                    document.getElementById("freeCalcBtn").disabled = false;
+                    document.getElementById("freeCalcBtn").textContent = "最安値を計算";
+                    document.getElementById("freeRangeBtn").disabled = false;
+                    document.getElementById("freeRangeBtn").textContent = "1GB単位で一覧表示";
                     document.getElementById("loading").textContent = "";
                 })
                 .catch((err) => {
-                    document.getElementById("loading").textContent =
-                        "WASMの読み込みに失敗しました: " + err;
+                    document.getElementById("loading").textContent = "WASMの読み込みに失敗しました: " + err;
                 });
 
-            function calculate() {
-                if (!wasmReady) return;
-                const lines = parseInt(
-                    document.getElementById("lines").value,
-                    10,
-                );
-                const minGB = parseInt(
-                    document.getElementById("minGB").value,
-                    10,
-                );
-                const maxGB = parseInt(
-                    document.getElementById("maxGB").value,
-                    10,
-                );
+            function switchTab(btn, name) {
+                document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+                document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+                document.getElementById("tab-" + name).classList.add("active");
+                btn.classList.add("active");
+            }
 
-                const resultDiv = document.getElementById("result");
-                resultDiv.style.display = "block";
-
-                if (
-                    isNaN(lines) ||
-                    isNaN(minGB) ||
-                    isNaN(maxGB) ||
-                    lines < 1 ||
-                    minGB < 1 ||
-                    maxGB < minGB
-                ) {
-                    resultDiv.innerHTML = `<div class="error">⚠️ 入力値が不正です。回線数・容量を正しく入力してください。</div>`;
-                    return;
-                }
-
-                const res = findCheapest(lines, minGB, maxGB);
-
-                if (!res.found) {
-                    resultDiv.innerHTML = `<div class="error">⚠️ ${res.message}</div>`;
-                    return;
-                }
-
+            function buildResultHTML(res, lines) {
                 const fmt = (n) => n.toLocaleString("ja-JP");
-
                 let html = `
-      <h2>計算結果</h2>
-      <div class="result-summary">
-        <div class="stat">
-          <div class="label">プラン合計（割引前）</div>
-          <div class="value">¥${fmt(res.bestCost)}<span style="font-size:0.8rem;font-weight:400">/月</span></div>
-        </div>
-        <div class="stat">
-          <div class="label">割引（${lines}回線 × ¥100）</div>
-          <div class="value">－¥${fmt(res.discount)}</div>
-        </div>
-        <div class="stat highlight">
-          <div class="label">最安値（割引後）</div>
-          <div class="value">¥${fmt(res.finalCost)}<span style="font-size:0.8rem;font-weight:400">/月</span></div>
-        </div>
-      </div>
-      <h2>最安の組み合わせ（${res.combos.length}パターン）</h2>
-      <ul class="combo-list">
-    `;
+                  <h2>計算結果</h2>
+                  <div class="result-summary">
+                    <div class="stat">
+                      <div class="label">プラン合計（割引前）</div>
+                      <div class="value">¥${fmt(res.bestCost)}<span style="font-size:0.8rem;font-weight:400">/月</span></div>
+                    </div>
+                    <div class="stat">
+                      <div class="label">割引（${lines}回線 × ¥100）</div>
+                      <div class="value">－¥${fmt(res.discount)}</div>
+                    </div>
+                    <div class="stat highlight">
+                      <div class="label">最安値（割引後）</div>
+                      <div class="value">¥${fmt(res.finalCost)}<span style="font-size:0.8rem;font-weight:400">/月</span></div>
+                    </div>
+                  </div>
+                  <h2>最安の組み合わせ（${res.combos.length}パターン）</h2>
+                  <ul class="combo-list">`;
                 for (const combo of res.combos) {
                     html += `<li><span class="gb">合計 ${combo.totalGB}GB</span><span class="per-gb">¥${combo.pricePerGB.toFixed(1)}/GB</span>${combo.label}</li>`;
                 }
                 html += `</ul>`;
-                resultDiv.innerHTML = html;
+                return html;
+            }
+
+            function buildRangeHTML(minGB, maxGB, getFn, hasLines) {
+                const fmt = (n) => n.toLocaleString("ja-JP");
+                const extraTh = hasLines ? "<th>回線数</th>" : "";
+                let html = `<h2>1GB単位の一覧（${minGB}GB〜${maxGB}GB）</h2>
+                  <div class="range-scroll"><table class="range-table">
+                  <thead><tr><th>合計GB</th>${extraTh}<th>最安値(割引後)</th><th>単価(/GB)</th><th>組み合わせ</th></tr></thead>
+                  <tbody>`;
+                for (let gb = minGB; gb <= maxGB; gb++) {
+                    const res = getFn(gb);
+                        html += `<tr class="no-result"><td>${gb}GB</td>${hasLines ? "<td>-</td>" : ""}<td colspan="3">組み合わせなし</td></tr>`;
+                    } else {
+                        const labels = res.combos.map(c => c.label).join("<br>");
+                        const perGB = res.finalCost / gb;
+                        const linesTd = hasLines ? `<td>${res.lines}</td>` : "";
+                        html += `<tr>
+                          <td><strong>${gb}GB</strong></td>${linesTd}
+                          <td>¥${fmt(res.finalCost)}</td>
+                          <td>¥${perGB.toFixed(1)}</td>
+                          <td class="combos">${labels}</td>
+                        </tr>`;
+                    }
+                }
+                html += `</tbody></table></div>`;
+                return html;
+            }
+
+            function calculate() {
+                const lines = parseInt(document.getElementById("lines").value, 10);
+                const minGB = parseInt(document.getElementById("minGB").value, 10);
+                const maxGB = parseInt(document.getElementById("maxGB").value, 10);
+                const div = document.getElementById("result");
+                div.style.display = "block";
+                if (isNaN(lines) || isNaN(minGB) || isNaN(maxGB) || lines < 1 || minGB < 1 || maxGB < minGB) {
+                    div.innerHTML = `<div class="error">⚠️ 入力値が不正です。</div>`; return;
+                }
+                const res = findCheapest(lines, minGB, maxGB);
+                div.innerHTML = buildResultHTML(res, lines);
             }
 
             function calculateRange() {
-                if (!wasmReady) return;
-                const lines = parseInt(
-                    document.getElementById("lines").value,
-                    10,
-                );
-                const minGB = parseInt(
-                    document.getElementById("minGB").value,
-                    10,
-                );
-                const maxGB = parseInt(
-                    document.getElementById("maxGB").value,
-                    10,
-                );
-
-                const rangeDiv = document.getElementById("range-result");
-                rangeDiv.style.display = "block";
-
-                if (
-                    isNaN(lines) ||
-                    isNaN(minGB) ||
-                    isNaN(maxGB) ||
-                    lines < 1 ||
-                    minGB < 1 ||
-                    maxGB < minGB
-                ) {
-                    rangeDiv.innerHTML = `<div class="error">⚠️ 入力値が不正です。回線数・容量を正しく入力してください。</div>`;
-                    return;
+                const lines = parseInt(document.getElementById("lines").value, 10);
+                const minGB = parseInt(document.getElementById("minGB").value, 10);
+                const maxGB = parseInt(document.getElementById("maxGB").value, 10);
+                const div = document.getElementById("range-result");
+                div.style.display = "block";
+                if (isNaN(lines) || isNaN(minGB) || isNaN(maxGB) || lines < 1 || minGB < 1 || maxGB < minGB) {
+                    div.innerHTML = `<div class="error">⚠️ 入力値が不正です。</div>`; return;
                 }
-
-                const fmtN = (n) => n.toLocaleString("ja-JP");
-
-                let html = `<h2>1GB単位の一覧（${minGB}GB〜${maxGB}GB）</h2>
-    <div class="range-scroll"><table class="range-table">
-      <thead><tr><th>合計GB</th><th>最安値(割引後)</th><th>単価(/GB)</th><th>組み合わせ</th></tr></thead>
-      <tbody>`;
-
-                for (let gb = minGB; gb <= maxGB; gb++) {
-                    const res = findCheapest(lines, gb, gb);
-                    if (!res.found) {
-                        html += `<tr class="no-result"><td>${gb}GB</td><td colspan="3">組み合わせなし</td></tr>`;
-                    } else {
-                        const comboLabels = res.combos
-                            .map((c) => c.label)
-                            .join("<br>");
-                        const perGB = res.finalCost / gb;
-                        html += `<tr>
-          <td><strong>${gb}GB</strong></td>
-          <td>¥${fmtN(res.finalCost)}</td>
-          <td>¥${perGB.toFixed(1)}</td>
-          <td class="combos">${comboLabels}</td>
-        </tr>`;
-                    }
-                }
-
-                html += `</tbody></table></div>`;
-                rangeDiv.innerHTML = html;
+                div.innerHTML = buildRangeHTML(minGB, maxGB, gb => findCheapest(lines, gb, gb), false);
             }
-        </script>
+
+            function calculateFree() {
+                const minGB = parseInt(document.getElementById("freeMinGB").value, 10);
+                const maxGB = parseInt(document.getElementById("freeMaxGB").value, 10);
+                const maxLines = parseInt(document.getElementById("freeMaxLines").value, 10);
+                const div = document.getElementById("free-result");
+                div.style.display = "block";
+                if (isNaN(minGB) || isNaN(maxGB) || isNaN(maxLines) || minGB < 1 || maxGB < minGB || maxLines < 1) {
+                    div.innerHTML = `<div class="error">⚠️ 入力値が不正です。</div>`; return;
+                }
+                const res = findCheapestAnyLines(minGB, maxGB, maxLines);
+                div.innerHTML = buildResultHTML(res, res.lines);
+            }
+
+            function calculateFreeRange() {
+                const minGB = parseInt(document.getElementById("freeMinGB").value, 10);
+                const maxGB = parseInt(document.getElementById("freeMaxGB").value, 10);
+                const maxLines = parseInt(document.getElementById("freeMaxLines").value, 10);
+                const div = document.getElementById("free-range-result");
+                div.style.display = "block";
+                if (isNaN(minGB) || isNaN(maxGB) || isNaN(maxLines) || minGB < 1 || maxGB < minGB || maxLines < 1) {
+                    div.innerHTML = `<div class="error">⚠️ 入力値が不正です。</div>`; return;
+                }
+                div.innerHTML = buildRangeHTML(minGB, maxGB, gb => findCheapestAnyLines(gb, gb, maxLines), true);
+            }
+        <\/script>
     </body>
 </html>

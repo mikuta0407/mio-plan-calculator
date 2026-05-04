@@ -20,7 +20,26 @@ func findCheapestJS(this js.Value, args []js.Value) any {
 	}
 
 	result := findCheapestCombos(lines, minGB, maxGB)
+	return comboResultToJS(result)
+}
 
+func findCheapestAnyLinesJS(this js.Value, args []js.Value) any {
+	minGB := args[0].Int()
+	maxGB := args[1].Int()
+	maxLines := args[2].Int()
+
+	if minGB < 1 || maxGB < minGB || maxLines < 1 {
+		return map[string]any{
+			"found":   false,
+			"message": "入力値が不正です",
+		}
+	}
+
+	result := findCheapestAnyLines(minGB, maxGB, maxLines)
+	return comboResultToJS(result)
+}
+
+func comboResultToJS(result ComboResult) any {
 	if result.BestCost == -1 {
 		return map[string]any{
 			"found":   false,
@@ -50,6 +69,7 @@ func findCheapestJS(this js.Value, args []js.Value) any {
 
 	return map[string]any{
 		"found":     true,
+		"lines":     result.Lines,
 		"bestCost":  result.BestCost,
 		"discount":  result.Discount,
 		"finalCost": result.FinalCost,
@@ -59,5 +79,6 @@ func findCheapestJS(this js.Value, args []js.Value) any {
 
 func main() {
 	js.Global().Set("findCheapest", js.FuncOf(findCheapestJS))
+	js.Global().Set("findCheapestAnyLines", js.FuncOf(findCheapestAnyLinesJS))
 	select {}
 }

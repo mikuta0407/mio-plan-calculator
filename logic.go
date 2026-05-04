@@ -19,6 +19,7 @@ var plans = []Plan{
 const discountPerLine = 100
 
 type ComboResult struct {
+	Lines     int
 	BestCost  int
 	Discount  int
 	FinalCost int
@@ -54,9 +55,26 @@ func findCheapestCombos(lines, minGB, maxGB int) ComboResult {
 		finalCost = bestCost - discount
 	}
 	return ComboResult{
+		Lines:     lines,
 		BestCost:  bestCost,
 		Discount:  discount,
 		FinalCost: finalCost,
 		Combos:    bestCombos,
 	}
+}
+
+// findCheapestAnyLines finds the cheapest combination for the given GB range
+// without fixing the number of lines (tries 1..maxLines).
+func findCheapestAnyLines(minGB, maxGB, maxLines int) ComboResult {
+	best := ComboResult{BestCost: -1}
+	for lines := 1; lines <= maxLines; lines++ {
+		r := findCheapestCombos(lines, minGB, maxGB)
+		if r.BestCost == -1 {
+			continue
+		}
+		if best.BestCost == -1 || r.FinalCost < best.FinalCost {
+			best = r
+		}
+	}
+	return best
 }
