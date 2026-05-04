@@ -247,6 +247,23 @@ button:disabled {
     font-size: 0.8rem;
     color: #4a5568;
 }
+/* Range legend */
+.range-legend {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+}
+.legend-item {
+    font-size: 0.8rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    font-weight: 600;
+}
+.legend-best   { background: #f0fff4; color: #276749; border: 1px solid #9ae6b4; }
+.legend-median { background: #ebf8ff; color: #2b6cb0; border: 1px solid #90cdf4; }
+.legend-worst  { background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; }
+
 /* Range row highlights */
 .range-table tr.row-best td { background: #f0fff4; }
 .range-table tr.row-worst td { background: #fff5f5; }
