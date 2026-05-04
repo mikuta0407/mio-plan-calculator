@@ -5,27 +5,33 @@ package main
 import (
 	"flag"
 	"fmt"
+	"strings"
 )
 
-func comboLabel(combo []Plan) string {
-	label := ""
-	for idx, p := range combo {
-		if idx > 0 {
-			label += " + "
+func comboLabel(combo MultiCombo) string {
+	var parts []string
+	for t, plans := range combo {
+		if len(plans) == 0 {
+			continue
 		}
-		label += fmt.Sprintf("%dGB(¥%d)", p.GB, p.Price)
+		s := planTypeNames[t] + ": "
+		for i, p := range plans {
+			if i > 0 {
+				s += "+"
+			}
+			s += fmt.Sprintf("%dGB(¥%d)", p.GB, p.Price)
+		}
+		parts = append(parts, s)
 	}
-	return label
+	return strings.Join(parts, " / ")
 }
 
 func printResult(result ComboResult) {
+	fmt.Printf("回線数: %d\n", result.Lines)
 	fmt.Printf("割引: ¥%d/月 (%d回線 × ¥%d)\n", result.Discount, result.Lines, discountPerLine)
 	fmt.Printf("最安値(割引後): ¥%d/月\n\n", result.FinalCost)
 	for _, combo := range result.Combos {
-		totalGB := 0
-		for _, p := range combo {
-			totalGB += p.GB
-		}
+		totalGB := combo.TotalGB()
 		fmt.Printf("合計 %dGB (¥%.1f/GB): %s\n",
 			totalGB,
 			float64(result.FinalCost)/float64(totalGB),
@@ -36,11 +42,11 @@ func printResult(result ComboResult) {
 
 func printAllTable(results []ComboResult, minGB int) {
 	fmt.Printf("%-8s %-6s %-14s %-12s %s\n", "合計GB", "回線数", "最安値(割引後)", "単価(/GB)", "組み合わせ")
-	fmt.Println("------------------------------------------------------------------------")
+	fmt.Println("--------------------------------------------------------------------------------")
 	for i, result := range results {
 		gb := minGB + i
-		if result.BestCost == -1 {
-			fmt.Printf("%-8s %-6s %-14s\n", fmt.Sprintf("%dGB", gb), "-", "組み合わせなし")
+		if !result.Found {
+			fmt.Printf("%-8s %-6s %s\n", fmt.Sprintf("%dGB", gb), "-", "組み合わせなし")
 			continue
 		}
 		perGB := float64(result.FinalCost) / float64(gb)
@@ -56,44 +62,40 @@ func printAllTable(results []ComboResult, minGB int) {
 }
 
 func main() {
-	lines := flag.Int("lines", 4, "回線数（-freeモードでは無視）")
-	minGB := flag.Int("min", 25, "最低容量(GB)")
-	maxGB := flag.Int("max", 45, "最高容量(GB)")
+	minGB := flag.Int("min", 25, "最低合計容量 (GB)")
+	maxGB := flag.Int("max", 45, "最高合計容量 (GB)")
 	all := flag.Bool("all", false, "min〜maxを1GB単位で一覧表示")
-	free := flag.Bool("free", false, "回線数を固定せず最安値を探す")
-	maxLines := flag.Int("maxlines", 10, "-freeモード時に試す最大回線数")
+
+	voiceMin := flag.Int("voice-min", 0, "音声SIMの最小枚数 (上限5)")
+	voiceMax := flag.Int("voice-max", -1, "音声SIMの最大枚数 (-1=制限なし、上限5)")
+	smsMin := flag.Int("sms-min", 0, "SMS SIMの最小枚数")
+	smsMax := flag.Int("sms-max", -1, "SMS SIMの最大枚数 (-1=制限なし)")
+	esimMin := flag.Int("esim-min", 0, "データeSIMの最小枚数")
+	esimMax := flag.Int("esim-max", -1, "データeSIMの最大枚数 (-1=制限なし)")
+	dataMin := flag.Int("data-min", 0, "データSIMの最小枚数")
+	dataMax := flag.Int("data-max", -1, "データSIMの最大枚数 (-1=制限なし)")
+
 	flag.Parse()
 
-	if *free {
-		if *all {
-			results := make([]ComboResult, *maxGB-*minGB+1)
-			for i, gb := range makeRange(*minGB, *maxGB) {
-				results[i] = findCheapestAnyLines(gb, gb, *maxLines)
-			}
-			printAllTable(results, *minGB)
-			return
-		}
-		result := findCheapestAnyLines(*minGB, *maxGB, *maxLines)
-		if result.BestCost == -1 {
-			fmt.Println("該当する組み合わせがありません")
-			return
-		}
-		printResult(result)
-		return
+	tc := TypeConstraints{
+		{*voiceMin, *voiceMax},
+		{*smsMin, *smsMax},
+		{*esimMin, *esimMax},
+		{*dataMin, *dataMax},
 	}
 
 	if *all {
 		results := make([]ComboResult, *maxGB-*minGB+1)
 		for i, gb := range makeRange(*minGB, *maxGB) {
-			results[i] = findCheapestCombos(*lines, gb, gb)
+			results[i] = findCheapestMultiType(tc, gb, gb)
 		}
 		printAllTable(results, *minGB)
 		return
 	}
 
-	result := findCheapestCombos(*lines, *minGB, *maxGB)
-	if result.BestCost == -1 {
-		fmt.Println("該当する組み合わせがありません")
+	result := findCheapestMultiType(tc, *minGB, *maxGB)
+	if !result.Found {
+		fmt.Println(result.Message)
 		return
 	}
 	printResult(result)
