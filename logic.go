@@ -112,7 +112,7 @@ func findCheapestMultiType(tc TypeConstraints, minGB, maxGB int) ComboResult {
 					}
 					discount := 0
 					if nV >= 2 {
-						discount = total * discountPerLine
+discount = nV * discountPerLine
 					}
 					upperBound := -1
 					if bestFinalCost != -1 {
