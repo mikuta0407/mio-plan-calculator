@@ -247,7 +247,13 @@ button:disabled {
     font-size: 0.8rem;
     color: #4a5568;
 }
-.range-table tr.no-result td {
+/* Range row highlights */
+.range-table tr.row-best td { background: #f0fff4; }
+.range-table tr.row-worst td { background: #fff5f5; }
+.range-table tr.row-median td { background: #ebf8ff; }
+.range-table tr.row-best td:nth-child(4) { color: #276749; font-weight: 700; }
+.range-table tr.row-worst td:nth-child(4) { color: #c53030; font-weight: 700; }
+.range-table tr.row-median td:nth-child(4) { color: #2b6cb0; font-weight: 700; }
     color: #a0aec0;
     font-style: italic;
 }

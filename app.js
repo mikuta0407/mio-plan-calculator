@@ -87,21 +87,54 @@ function buildResultHTML(res) {
 
 function buildRangeHTML(minGB, maxGB, getFn, canvasId) {
     const fmt = (n) => n.toLocaleString("ja-JP");
+
+    // First pass: collect all results
+    const results = [];
+    for (let gb = minGB; gb <= maxGB; gb++) {
+        results.push({ gb, res: getFn(gb) });
+    }
+
+    // Compute per-GB price stats for color highlights
+    const validPPG = results
+        .filter((r) => r.res.found)
+        .map((r) => r.res.finalCost / r.gb);
+    const minPPG = validPPG.length ? Math.min(...validPPG) : null;
+    const maxPPG = validPPG.length ? Math.max(...validPPG) : null;
+    const sorted = [...validPPG].sort((a, b) => a - b);
+    const medianPPG = sorted.length
+        ? sorted[Math.floor(sorted.length / 2)]
+        : null;
+    // Find the value closest to median (excludes min/max)
+    const medianTarget = sorted.filter((v) => v !== minPPG && v !== maxPPG);
+    const closestToMedian = medianTarget.length
+        ? medianTarget.reduce((a, b) =>
+              Math.abs(a - medianPPG) <= Math.abs(b - medianPPG) ? a : b)
+        : null;
+
     const data = [];
     let html = `<h2>1GB単位の一覧（${minGB}GB〜${maxGB}GB）</h2>
+      <div class="range-legend">
+        <span class="legend-item legend-best">単価 最安</span>
+        <span class="legend-item legend-median">単価 中央値</span>
+        <span class="legend-item legend-worst">単価 最高</span>
+      </div>
       <div class="range-scroll"><table class="range-table">
       <thead><tr><th>合計GB</th><th>回線数</th><th>最安値(割引後)</th><th>単価(/GB)</th><th>組み合わせ</th></tr></thead>
       <tbody>`;
-    for (let gb = minGB; gb <= maxGB; gb++) {
-        const res = getFn(gb);
+
+    for (const { gb, res } of results) {
         if (!res.found) {
             data.push(null);
             html += `<tr class="no-result"><td>${gb}GB</td><td colspan="4">組み合わせなし</td></tr>`;
         } else {
-            data.push({ gb, price: res.finalCost, pricePerGB: res.finalCost / gb });
-            const labels = res.combos.map((c) => comboCompactLabel(c)).join("<br>");
             const perGB = res.finalCost / gb;
-            html += `<tr>
+            data.push({ gb, price: res.finalCost, pricePerGB: perGB });
+            const labels = res.combos.map((c) => comboCompactLabel(c)).join("<br>");
+            let rowClass = "";
+            if (perGB === minPPG) rowClass = "row-best";
+            else if (perGB === maxPPG) rowClass = "row-worst";
+            else if (closestToMedian !== null && perGB === closestToMedian) rowClass = "row-median";
+            html += `<tr${rowClass ? ` class="${rowClass}"` : ""}>
               <td><strong>${gb}GB</strong></td>
               <td>${res.lines}</td>
               <td>¥${fmt(res.finalCost)}</td>
