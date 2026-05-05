@@ -1,5 +1,7 @@
 # IIJmio プラン組み合わせ計算機
 
+**公開URL: https://mikuta0407.github.io/mio-plan-calculator/**
+
 IIJmio の料金プランを複数回線・複数 SIM タイプで組み合わせ、指定した合計容量の範囲内で最安値を計算するツールです。
 
 ## 機能
