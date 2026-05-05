@@ -122,13 +122,13 @@ function buildRangeHTML(minGB, maxGB, getFn, canvasId) {
         <span class="legend-item legend-worst">単価 最高</span>
       </div>
       <div class="range-scroll"><table class="range-table">
-      <thead><tr><th>合計GB</th><th>回線数</th><th>最安値(割引後)</th><th>単価(/GB)</th><th>組み合わせ</th></tr></thead>
+      <thead><tr><th>合計GB</th><th>回線数</th><th>割引</th><th>最安値(割引後)</th><th>単価(/GB)</th><th>組み合わせ</th></tr></thead>
       <tbody>`;
 
     for (const { gb, res } of results) {
         if (!res.found) {
             data.push(null);
-            html += `<tr class="no-result"><td>${gb}GB</td><td colspan="4">組み合わせなし</td></tr>`;
+            html += `<tr class="no-result"><td>${gb}GB</td><td colspan="5">組み合わせなし</td></tr>`;
         } else {
             const perGB = res.finalCost / gb;
             data.push({ gb, price: res.finalCost, pricePerGB: perGB });
@@ -137,9 +137,13 @@ function buildRangeHTML(minGB, maxGB, getFn, canvasId) {
             if (perGB === minPPG) rowClass = "row-best";
             else if (perGB === maxPPG) rowClass = "row-worst";
             else if (closestToMedian !== null && perGB === closestToMedian) rowClass = "row-median";
+            const discountCell = res.discount > 0
+                ? `<span style="color:#e53e3e">－¥${fmt(res.discount)}</span>`
+                : `<span style="color:#a0aec0">-</span>`;
             html += `<tr${rowClass ? ` class="${rowClass}"` : ""}>
               <td><strong>${gb}GB</strong></td>
               <td>${res.lines}</td>
+              <td>${discountCell}</td>
               <td>¥${fmt(res.finalCost)}</td>
               <td>¥${perGB.toFixed(1)}</td>
               <td class="combos">${labels}</td>
