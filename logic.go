@@ -95,6 +95,7 @@ type ComboResult struct {
 func findCheapestMultiType(tc TypeConstraints, minGB, maxGB int) ComboResult {
 	bestFinalCost := -1
 	var bestCombos []MultiCombo
+	bestDiscount := 0
 
 	maxV := tc.effectiveMax(PlanTypeVoice)
 	maxS := tc.effectiveMax(PlanTypeSMS)
@@ -109,7 +110,10 @@ func findCheapestMultiType(tc TypeConstraints, minGB, maxGB int) ComboResult {
 					if total == 0 {
 						continue
 					}
-					discount := total * discountPerLine
+					discount := 0
+					if nV >= 2 {
+discount = nV * discountPerLine
+					}
 					upperBound := -1
 					if bestFinalCost != -1 {
 						upperBound = bestFinalCost + discount
@@ -123,6 +127,7 @@ func findCheapestMultiType(tc TypeConstraints, minGB, maxGB int) ComboResult {
 					if bestFinalCost == -1 || finalCost < bestFinalCost {
 						bestFinalCost = finalCost
 						bestCombos = combos
+						bestDiscount = discount
 					} else if finalCost == bestFinalCost {
 						bestCombos = append(bestCombos, combos...)
 					}
@@ -142,8 +147,8 @@ func findCheapestMultiType(tc TypeConstraints, minGB, maxGB int) ComboResult {
 	return ComboResult{
 		Found:     true,
 		Lines:     totalLines,
-		BestCost:  bestFinalCost + totalLines*discountPerLine,
-		Discount:  totalLines * discountPerLine,
+		BestCost:  bestFinalCost + bestDiscount,
+		Discount:  bestDiscount,
 		FinalCost: bestFinalCost,
 		Combos:    bestCombos,
 	}

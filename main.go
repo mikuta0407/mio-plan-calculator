@@ -28,7 +28,11 @@ func comboLabel(combo MultiCombo) string {
 
 func printResult(result ComboResult) {
 	fmt.Printf("回線数: %d\n", result.Lines)
-	fmt.Printf("割引: ¥%d/月 (%d回線 × ¥%d)\n", result.Discount, result.Lines, discountPerLine)
+	if result.Discount > 0 {
+		fmt.Printf("割引: ¥%d/月 (%d回線 × ¥%d)\n", result.Discount, result.Lines, discountPerLine)
+	} else {
+		fmt.Printf("割引: 対象外 (音声2回線未満)\n")
+	}
 	fmt.Printf("最安値(割引後): ¥%d/月\n\n", result.FinalCost)
 	for _, combo := range result.Combos {
 		totalGB := combo.TotalGB()

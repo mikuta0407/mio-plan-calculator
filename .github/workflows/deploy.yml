@@ -1,0 +1,55 @@
+name: Deploy to GitHub Pages
+
+on:
+  # mainブランチに変更がプッシュされたときに実行
+  push:
+    branches: ["main"]
+  # 手動実行も可能にする
+  workflow_dispatch:
+
+# GitHub Pagesへのデプロイに必要な権限を設定
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 複数デプロイが重複して走らないように制御
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          # go.mod からバージョン (1.26.2 など) を自動取得
+          go-version-file: 'go.mod'
+
+      - name: Build WebAssembly
+        run: |
+          # Makefileのタスクを利用して main.wasm と wasm_exec.js を生成
+          make wasm
+
+      - name: Prepare distribution files
+        run: |
+          # 公開用のディレクトリを作成し、必要なファイルだけをまとめる
+          mkdir dist
+          cp index.html style.css app.js main.wasm wasm_exec.js dist/
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
