@@ -51,7 +51,7 @@ function comboCompactLabel(combo) {
 
 function buildResultHTML(res) {
     const fmt = (n) => n.toLocaleString("ja-JP");
-    const discountLabel = res.discount > 0 ? `割引（${res.lines}回線 × ¥100）` : "割引（複数回線割引）";
+    const discountLabel = res.discount > 0 ? `割引（${res.discount / 100}回線 × ¥100）` : "割引（複数回線割引）";
     const discountValue = res.discount > 0 ? `－¥${fmt(res.discount)}` : '<span style="font-size:0.9rem;color:#718096">対象外</span>';
     let html = `
       <h2>計算結果</h2>
